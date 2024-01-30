@@ -40,6 +40,7 @@ public:
     if (mkdir((log_dir_ + dir_name_).c_str(), 0777) == 0) {
       std::cout << "dir_name_:" << dir_name_ << std::endl;
       output_csv_path_ = log_dir_ + dir_name_;
+      start_time_= rclcpp::Clock().now();
       init_str_sub_ = this->create_subscription<std_msgs::msg::String>(
         "/data_logger/init", rclcpp::QoS(10).reliable(), [&](const std_msgs::msg::String::SharedPtr msg) {
           std::cout << "get init:" << msg->data << std::endl;
@@ -49,6 +50,7 @@ public:
             std::cout << "file name:" << file_name << std::endl;
             std::ofstream ofs_csv_file(output_csv_path_ + "/" + file_name + ".csv");
             if (ofs_csv_file) {
+              ofs_csv_file << "time_stamp" << ',';
               for (size_t i = 1; i < srt_list.size(); i++) {
                 ofs_csv_file << srt_list[i] << ',';
               }
@@ -66,6 +68,8 @@ public:
             std::cout << "file name:" << file_name << std::endl;
             std::ofstream ofs_csv_file(output_csv_path_ + "/" + file_name + ".csv", std::ios::app);
             if (ofs_csv_file) {
+              double t = (rclcpp::Clock().now() - start_time_).seconds();
+              ofs_csv_file << t << ',';
               for (size_t i = 1; i < srt_list.size(); i++) {
                 ofs_csv_file << srt_list[i] << ',';
               }
@@ -85,6 +89,7 @@ private:
   std::string output_csv_path_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr log_str_sub_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr init_str_sub_;
+  rclcpp::Time start_time_;
 
   std::string currentDateTime()
   {
