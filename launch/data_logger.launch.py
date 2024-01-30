@@ -21,7 +21,8 @@ def generate_launch_description():
             package='data_logger',
             executable='data_logger',
             namespace='',
-            output="screen",
+            # output="screen",
+            # arguments=['--ros-args', '--log-level', 'WARN'],
             parameters=[{"log_dir" : os.path.join(ws_dir,"data_log")}],
             respawn=True,
         )
