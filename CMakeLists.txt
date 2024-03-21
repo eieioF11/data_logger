@@ -1,29 +1,30 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.0.2)
 project(data_logger)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
-
+add_compile_options(-std=c++17)
 add_compile_options(-O3)
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-
-ament_auto_add_executable(${PROJECT_NAME} src/main.cpp)
-
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}/
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+  geometry_msgs
+  nav_msgs
+  tf
 )
 
-ament_auto_package()
+catkin_package(
+  INCLUDE_DIRS include
+  #  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS roscpp std_msgs geometry_msgs nav_msgs
+)
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+
+add_executable(${PROJECT_NAME} src/main.cpp)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  tbb
+)
