@@ -22,6 +22,7 @@ find_package(std_msgs REQUIRED)
 ament_auto_add_executable(${PROJECT_NAME} src/main.cpp)
 
 install(DIRECTORY
+  include/data_logger_utils
   launch
   DESTINATION share/${PROJECT_NAME}/
 )
