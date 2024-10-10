@@ -28,6 +28,7 @@ namespace data_logger
   public:
     LogPublisher() {}
     LogPublisher(rclcpp::Node *node) : node_(node) {}
+    LogPublisher(rclcpp::Node *node,const std::string &name) : node_(node),name_(name) {}
     LogPublisher(rclcpp::Node *node,const std::string &name, const std::vector<std::string> &column_names) : node_(node)
     {
       init_data_logger(name, column_names);
@@ -38,6 +39,12 @@ namespace data_logger
      * @param node
      */
     void set_node(rclcpp::Node *node) { node_ = node; }
+    /**
+     * @brief ファイル名設定
+     *
+     * @param name
+     */
+    void set_name(const std::string &name) { name_ = name; }
     /**
      * @brief data_loggerの初期化
      *
@@ -65,6 +72,14 @@ namespace data_logger
         msg.data += column_name + ",";
       }
       init_log_pub_->publish(msg);
+    }
+    /**
+     * @brief data_loggerの初期化
+     *
+     * @param column_names : colmnのname list
+     */
+    void init_data_logger(const std::vector<std::string> &column_names){
+      init_data_logger(name_, column_names);
     }
     /**
      * @brief データのセット
