@@ -38,43 +38,20 @@ public:
       std::cout << "dir_name_:" << dir_name_ << std::endl;
       output_csv_path_ = log_dir_ + dir_name_;
       start_time_ = rclcpp::Clock().now();
-      init_str_sub_ = this->create_subscription<std_msgs::msg::String>(
-          "/data_logger/init", rclcpp::QoS(10).reliable(), [&](const std_msgs::msg::String::SharedPtr msg)
-          {
-          std::cout << "get init:" << msg->data << std::endl;
-          std::vector<std::string> srt_list = split(msg->data, ",");
-          if (srt_list.size() > 0) {
-            std::string file_name = srt_list[0];
-            std::cout << "file name:" << file_name << std::endl;
-            std::ofstream ofs_csv_file(output_csv_path_ + "/" + file_name + ".csv");
-            if (ofs_csv_file) {
-              ofs_csv_file << "time_stamp" << ',';
-              for (size_t i = 1; i < srt_list.size(); i++) {
-                ofs_csv_file << srt_list[i] << ',';
-              }
-              ofs_csv_file << std::endl;
-            } else
-              RCLCPP_WARN(this->get_logger(), "can not open csv %s", file_name.c_str());
-          } });
       log_str_sub_ = this->create_subscription<std_msgs::msg::String>(
           "/data_logger/log", rclcpp::QoS(10).reliable(), [&](const std_msgs::msg::String::SharedPtr msg)
           {
-          std::cout << "get log:" << msg->data << std::endl;
-          std::vector<std::string> srt_list = split(msg->data, ",");
-          if (srt_list.size() > 0) {
-            std::string file_name = srt_list[0];
-            std::cout << "file name:" << file_name << std::endl;
-            std::ofstream ofs_csv_file(output_csv_path_ + "/" + file_name + ".csv", std::ios::app);
-            if (ofs_csv_file) {
+            std::cout << "get log:" << msg->data << std::endl;
+            LogData log_data = make_file(msg->data);
+            std::ofstream ofs_csv_file(log_data.file_path, std::ios::app);
+            if (ofs_csv_file)
+            {
               double t = (rclcpp::Clock().now() - start_time_).seconds();
-              ofs_csv_file << t << ',';
-              for (size_t i = 1; i < srt_list.size(); i++) {
-                ofs_csv_file << srt_list[i] << ',';
-              }
-              ofs_csv_file << std::endl;
-            } else
-              RCLCPP_WARN(this->get_logger(), "can not open csv %s", file_name.c_str());
-          } });
+              ofs_csv_file << t << ',' << log_data.data << std::endl;
+            }
+            else
+              RCLCPP_WARN(this->get_logger(), "can not open csv %s", log_data.file_name.c_str());
+          });
     }
     else
       RCLCPP_WARN(this->get_logger(), "can not open dir %s", (log_dir_ + dir_name_).c_str());
@@ -118,5 +95,46 @@ private:
     char buffer[128];
     strftime(buffer, sizeof(buffer), "%Y%m%d_%X", now);
     return buffer;
+  }
+
+  /*
+  data format : file_name|header1,header2,header3,...|data1,data2,data3,...
+  */
+  struct LogData
+  {
+    bool file_exist;
+    std::string file_name;
+    std::string file_path;
+    std::string headers; // header1,header2,header3,...
+    std::string data;    // data1,data2,data3,...
+  };
+
+  LogData make_file(const std::string &data)
+  {
+    LogData log_data;
+    log_data.file_exist = false;
+    std::cout << "get init:" << data << std::endl;
+    std::vector<std::string> srt_list = split(data, "|");
+    if (srt_list.size() == 3)
+    {
+      log_data.file_name = srt_list[0];
+      log_data.headers = srt_list[1];
+      log_data.data = srt_list[2];
+      std::cout << "file name:" << log_data.file_name << std::endl;
+      log_data.file_path = output_csv_path_ + "/" + log_data.file_name + ".csv";
+      std::ofstream f_File;
+      f_File.open(log_data.file_path, std::ios_base::in);
+      if (f_File.fail())
+      {
+        std::ofstream ofs_csv_file(log_data.file_path);
+        if (ofs_csv_file)
+          ofs_csv_file << "time_stamp" << ',' << log_data.headers << std::endl;
+        else
+          RCLCPP_WARN(this->get_logger(), "can not open csv %s", log_data.file_name.c_str());
+      }
+      else
+        log_data.file_exist = true;
+    }
+    return log_data;
   }
 };
