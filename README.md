@@ -1,5 +1,7 @@
 # data_logger
 
+![workflow](https://github.com/eieioF11/data_logger/actions/workflows/release.yml/badge.svg)
+
 Node to save log in csv format.
 
 ## Data Format
